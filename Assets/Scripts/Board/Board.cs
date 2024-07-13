@@ -136,18 +136,57 @@ public class Board
     }
 
 
-    internal void FillGapsWithNewItems()
-    {
-        for (int x = 0; x < boardSizeX; x++)
-        {
-            for (int y = 0; y < boardSizeY; y++)
-            {
+    internal void FillGapsWithNewItems() {
+        List<Cell> neighbours = new List<Cell>();
+        List<NormalItem.eNormalType> surroundingTypes = new List<NormalItem.eNormalType>();
+        Dictionary<NormalItem.eNormalType, int> typeCounts = new Dictionary<NormalItem.eNormalType, int>();
+        
+        for (int x = 0; x < boardSizeX; x++) {
+            for (int y = 0; y < boardSizeY; y++) {
                 Cell cell = m_cells[x, y];
                 if (!cell.IsEmpty) continue;
-
+                
+                neighbours.Clear();
+                neighbours = new List<Cell> {
+                    cell.NeighbourUp,
+                    cell.NeighbourBottom,
+                    cell.NeighbourLeft,
+                    cell.NeighbourRight
+                };
+                
+                // filter surrounding type
+                surroundingTypes.Clear();
+                foreach (var c in neighbours.Where(cell => cell != null)) {
+                    if (c.Item is NormalItem norItem) {
+                        surroundingTypes.Add(norItem.ItemType);
+                    }
+                }
+                
+                // add types count to board
+                typeCounts.Clear();
+                foreach (var c in m_cells) {
+                    if (c.Item is NormalItem norItem) {
+                        if (!typeCounts.ContainsKey(norItem.ItemType)) {
+                            typeCounts.Add(norItem.ItemType, 1);
+                        }
+                        else {
+                            typeCounts[norItem.ItemType]++;
+                        }
+                    }
+                }
+                
+                /* Get matching type with conditions:
+                   - Doesn't match the already surrounding type (Where...)
+                   - Match with the lowest type count on the board (OrderBy...FirstOrDefault)
+                */ 
+                var matchingType = typeCounts
+                    .Where(key => !surroundingTypes.Contains(key.Key)) 
+                    .OrderBy(key2 => key2.Value)
+                    .FirstOrDefault().Key;
+                
                 NormalItem item = new NormalItem();
 
-                item.SetType(Utils.GetRandomNormalType());
+                item.SetType(matchingType);
                 item.SetView();
                 item.SetViewRoot(m_root);
 
@@ -156,6 +195,7 @@ public class Board
             }
         }
     }
+    
 
     internal void ExplodeAllItems()
     {
