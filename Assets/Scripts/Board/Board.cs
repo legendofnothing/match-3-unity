@@ -157,7 +157,7 @@ public class Board
                 // filter surrounding type
                 surroundingTypes.Clear();
                 foreach (var c in neighbours.Where(cell => cell != null)) {
-                    if (c.Item is NormalItem norItem) {
+                    if (c.Item is NormalItem norItem && !surroundingTypes.Contains(norItem.ItemType)) {
                         surroundingTypes.Add(norItem.ItemType);
                     }
                 }
@@ -187,6 +187,9 @@ public class Board
                 NormalItem item = new NormalItem();
 
                 item.SetType(matchingType);
+                if (!surroundingTypes.Contains(matchingType)) {
+                    surroundingTypes.Add(matchingType);
+                }
                 item.SetView();
                 item.SetViewRoot(m_root);
 
