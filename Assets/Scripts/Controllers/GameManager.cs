@@ -3,6 +3,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.SceneManagement;
+
+public static class GameData {
+    public static UnityEvent OnGameRestart = new UnityEvent();
+    public static GameManager.eLevelMode LastMode;
+    public static bool ShouldReloadLevel = false;
+}
 
 public class GameManager : MonoBehaviour
 {
@@ -47,16 +55,24 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        State = eStateGame.SETUP;
-
         m_gameSettings = Resources.Load<GameSettings>(Constants.GAME_SETTINGS_PATH);
 
         m_uiMenu = FindObjectOfType<UIMainManager>();
         m_uiMenu.Setup(this);
+        
+        GameData.OnGameRestart.AddListener(RestartLevel);
+        
+        State = eStateGame.SETUP;
     }
 
     void Start()
     {
+        if (GameData.ShouldReloadLevel) {
+            LoadLevel(GameData.LastMode);
+            GameData.ShouldReloadLevel = false;
+            return;
+        } 
+        
         State = eStateGame.MAIN_MENU;
     }
 
@@ -66,7 +82,10 @@ public class GameManager : MonoBehaviour
         if (m_boardController != null) m_boardController.Update();
     }
 
-
+    private void OnDestroy() {
+        GameData.OnGameRestart.RemoveAllListeners();
+    }
+    
     internal void SetState(eStateGame state)
     {
         State = state;
@@ -81,8 +100,8 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void LoadLevel(eLevelMode mode)
-    {
+    public void LoadLevel(eLevelMode mode) {
+        GameData.LastMode = mode;
         m_boardController = new GameObject("BoardController").AddComponent<BoardController>();
         m_boardController.StartGame(this, m_gameSettings);
 
@@ -98,7 +117,7 @@ public class GameManager : MonoBehaviour
         }
 
         m_levelCondition.ConditionCompleteEvent += GameOver;
-
+        
         State = eStateGame.GAME_STARTED;
     }
 
@@ -117,6 +136,13 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private void RestartLevel() {
+        GameData.ShouldReloadLevel = true;
+        ClearLevelCondition();
+        ClearLevel();
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
     private IEnumerator WaitBoardController()
     {
         while (m_boardController.IsBusy)
@@ -128,12 +154,14 @@ public class GameManager : MonoBehaviour
 
         State = eStateGame.GAME_OVER;
 
-        if (m_levelCondition != null)
-        {
-            m_levelCondition.ConditionCompleteEvent -= GameOver;
+        ClearLevelCondition();
+    }
 
-            Destroy(m_levelCondition);
-            m_levelCondition = null;
-        }
+    private void ClearLevelCondition() {
+        if (m_levelCondition == null) return;
+        m_levelCondition.ConditionCompleteEvent -= GameOver;
+
+        Destroy(m_levelCondition);
+        m_levelCondition = null;
     }
 }
