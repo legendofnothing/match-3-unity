@@ -11,14 +11,17 @@ public class Item
 
     public Transform View { get; private set; }
 
+    private GameObject _currentInstance;
+
 
     public virtual void SetView() {
-        var inst = new GameObject(GetItemName, typeof(SpriteRenderer));
-        var spriteRenderer = inst.GetComponent<SpriteRenderer>();
+        _currentInstance = PoolObject.Instance.Get();
+        _currentInstance.name = GetItemName;
+        var spriteRenderer = _currentInstance.GetComponent<SpriteRenderer>();
         spriteRenderer.sortingLayerName = "items";
         
         spriteRenderer.sprite = GetPrefabSprite();
-        View = inst.transform;
+        View = _currentInstance.transform;
     }
 
     protected virtual Sprite GetPrefabSprite() { return null; }
@@ -47,8 +50,8 @@ public class Item
 
     public void SetViewRoot(Transform root)
     {
-        if (View)
-        {
+        if (View) {
+            View.transform.localScale = Vector3.one;
             View.SetParent(root);
         }
     }
@@ -98,7 +101,8 @@ public class Item
             View.DOScale(0.1f, 0.1f).OnComplete(
                 () =>
                 {
-                    GameObject.Destroy(View.gameObject);
+                    PoolObject.Instance.Destroy(_currentInstance);
+                    _currentInstance = null;
                     View = null;
                 }
                 );

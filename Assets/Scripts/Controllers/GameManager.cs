@@ -67,11 +67,17 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        if (!PoolObject.Instance.Init) {
+            var prefab = new GameObject("poolobject", typeof(SpriteRenderer));
+            PoolObject.Instance.InitPool(prefab, transform, m_gameSettings.BoardSizeX * m_gameSettings.BoardSizeY);
+        }
+        
         if (GameData.ShouldReloadLevel) {
             LoadLevel(GameData.LastMode);
             GameData.ShouldReloadLevel = false;
             return;
         } 
+        
         
         State = eStateGame.MAIN_MENU;
     }
@@ -104,7 +110,7 @@ public class GameManager : MonoBehaviour
         GameData.LastMode = mode;
         m_boardController = new GameObject("BoardController").AddComponent<BoardController>();
         m_boardController.StartGame(this, m_gameSettings);
-
+        
         if (mode == eLevelMode.MOVES)
         {
             m_levelCondition = this.gameObject.AddComponent<LevelMoves>();
