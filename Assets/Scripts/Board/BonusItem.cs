@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using SO;
 using UnityEngine;
 
 public class BonusItem : Item
@@ -14,32 +15,33 @@ public class BonusItem : Item
     }
 
     public eBonusType ItemType;
+    private List<TextureItemBonus> _normalTextureItems = new List<TextureItemBonus>();
 
     public void SetType(eBonusType type)
     {
         ItemType = type;
     }
 
-    protected override string GetPrefabName()
+    protected override Sprite GetPrefabSprite()
     {
-        string prefabname = string.Empty;
-        switch (ItemType)
-        {
-            case eBonusType.NONE:
-                break;
-            case eBonusType.HORIZONTAL:
-                prefabname = Constants.PREFAB_BONUS_HORIZONTAL;
-                break;
-            case eBonusType.VERTICAL:
-                prefabname = Constants.PREFAB_BONUS_VERTICAL;
-                break;
-            case eBonusType.ALL:
-                prefabname = Constants.PREFAB_BONUS_BOMB;
-                break;
-        }
+        try {
+            if (_normalTextureItems.Count <= 0) {
+                _normalTextureItems = Resources.Load<TexturesBonus>(Constants.TEXTURE_BONUS_PATH).items;
+            }
+            var item = _normalTextureItems.Find(x => x.type == ItemType);
 
-        return prefabname;
+            if (item.sprite != null) return item.sprite;
+            Debug.LogError($"Failed to load item at ItemType: {ItemType}");
+            return null;
+
+        }
+        catch (Exception e) {
+            Debug.LogError($"Failed to load texture: {e.Message}");
+            return null;
+        }
     }
+    
+    protected override string GetItemName => $"bonusType_{Enum.GetName(typeof(eBonusType), ItemType)}";
 
     internal override bool IsSameType(Item other)
     {

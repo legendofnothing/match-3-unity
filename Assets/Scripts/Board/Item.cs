@@ -12,21 +12,18 @@ public class Item
     public Transform View { get; private set; }
 
 
-    public virtual void SetView()
-    {
-        string prefabname = GetPrefabName();
-
-        if (!string.IsNullOrEmpty(prefabname))
-        {
-            GameObject prefab = Resources.Load<GameObject>(prefabname);
-            if (prefab)
-            {
-                View = GameObject.Instantiate(prefab).transform;
-            }
-        }
+    public virtual void SetView() {
+        var inst = new GameObject(GetItemName, typeof(SpriteRenderer));
+        var spriteRenderer = inst.GetComponent<SpriteRenderer>();
+        spriteRenderer.sortingLayerName = "items";
+        
+        spriteRenderer.sprite = GetPrefabSprite();
+        View = inst.transform;
     }
 
-    protected virtual string GetPrefabName() { return string.Empty; }
+    protected virtual Sprite GetPrefabSprite() { return null; }
+
+    protected virtual string GetItemName => "defaultItem";
 
     public virtual void SetCell(Cell cell)
     {

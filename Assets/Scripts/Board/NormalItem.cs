@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using SO;
 using UnityEngine;
 
 public class NormalItem : Item
@@ -16,42 +18,33 @@ public class NormalItem : Item
     }
 
     public eNormalType ItemType;
+    private List<TextureItem> _normalTextureItems = new List<TextureItem>();
 
     public void SetType(eNormalType type)
     {
         ItemType = type;
     }
 
-    protected override string GetPrefabName()
+    protected override Sprite GetPrefabSprite()
     {
-        string prefabname = string.Empty;
-        switch (ItemType)
-        {
-            case eNormalType.TYPE_ONE:
-                prefabname = Constants.PREFAB_NORMAL_TYPE_ONE;
-                break;
-            case eNormalType.TYPE_TWO:
-                prefabname = Constants.PREFAB_NORMAL_TYPE_TWO;
-                break;
-            case eNormalType.TYPE_THREE:
-                prefabname = Constants.PREFAB_NORMAL_TYPE_THREE;
-                break;
-            case eNormalType.TYPE_FOUR:
-                prefabname = Constants.PREFAB_NORMAL_TYPE_FOUR;
-                break;
-            case eNormalType.TYPE_FIVE:
-                prefabname = Constants.PREFAB_NORMAL_TYPE_FIVE;
-                break;
-            case eNormalType.TYPE_SIX:
-                prefabname = Constants.PREFAB_NORMAL_TYPE_SIX;
-                break;
-            case eNormalType.TYPE_SEVEN:
-                prefabname = Constants.PREFAB_NORMAL_TYPE_SEVEN;
-                break;
-        }
+        try {
+            if (_normalTextureItems.Count <= 0) {
+                _normalTextureItems = Resources.Load<Textures>(Constants.TEXTURE_PATH).items;
+            }
+            var item = _normalTextureItems.Find(x => x.type == ItemType);
 
-        return prefabname;
+            if (item.sprite != null) return item.sprite;
+            Debug.LogError($"Failed to load item at ItemType: {ItemType}");
+            return null;
+
+        }
+        catch (Exception e) {
+            Debug.LogError($"Failed to load texture: {e.Message}");
+            return null;
+        }
     }
+
+    protected override string GetItemName => $"normalType_{Enum.GetName(typeof(eNormalType), ItemType)}";
 
     internal override bool IsSameType(Item other)
     {
