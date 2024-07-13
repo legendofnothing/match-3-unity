@@ -10,17 +10,34 @@ public class UIMainManager : MonoBehaviour
     private IMenu[] m_menuList;
 
     private GameManager m_gameManager;
+    
+    [Serializable]
+    public struct Canvases {
+        public GameManager.eStateGame correspondState;
+        public Canvas canvas;
+    }
 
     private void Awake()
     {
         m_menuList = GetComponentsInChildren<IMenu>(true);
     }
 
+    [SerializeField] private List<Canvases> _canvasesList = new List<Canvases>();
+
     void Start()
     {
         for (int i = 0; i < m_menuList.Length; i++)
         {
             m_menuList[i].Setup(this);
+        }
+
+        if (_canvasesList.Count <= 0) {
+            Debug.LogError($"No canvasList ref setup at {this}");
+            return;
+        }
+        
+        foreach (var element in _canvasesList) {
+            element.canvas.enabled = false;
         }
     }
 
@@ -53,22 +70,13 @@ public class UIMainManager : MonoBehaviour
 
     private void OnGameStateChange(GameManager.eStateGame state)
     {
-        switch (state)
-        {
-            case GameManager.eStateGame.SETUP:
-                break;
-            case GameManager.eStateGame.MAIN_MENU:
-                ShowMenu<UIPanelMain>();
-                break;
-            case GameManager.eStateGame.GAME_STARTED:
-                ShowMenu<UIPanelGame>();
-                break;
-            case GameManager.eStateGame.PAUSE:
-                ShowMenu<UIPanelPause>();
-                break;
-            case GameManager.eStateGame.GAME_OVER:
-                ShowMenu<UIPanelGameOver>();
-                break;
+        foreach (var element in _canvasesList) {
+            if (element.correspondState == state) {
+                element.canvas.enabled = true;
+                continue;
+            }
+            
+            if (element.canvas.enabled) element.canvas.enabled = false;
         }
     }
 
